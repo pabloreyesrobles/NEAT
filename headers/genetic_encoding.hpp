@@ -147,6 +147,8 @@ namespace ANN_USM{
 
 			void loadFromArray(char buffer[]);
 
+			bool FitnessSort(Genetic_Encoding first_genome, Genetic_Encoding second_genome);
+
 
 			vector <connection_gene> 	Lconnection_genes; //List of connections genes
 			vector <node_gene> 			Lnode_genes;
@@ -156,6 +158,8 @@ namespace ANN_USM{
 			vector < int > 				row_orderer_list;
 			vector < vector <int> >		nodes_at_row;
 			vector < int > 				outputs_positions;
+			// NEW VERSION
+			double 						s_offspring;
 	};
 }
 ostream & operator<<(ostream & o, ANN_USM::Genetic_Encoding & encoding);

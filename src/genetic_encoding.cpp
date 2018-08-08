@@ -1238,5 +1238,9 @@ void Genetic_Encoding::reset_past_values(){
 	}
 }
 
+bool Genetic_Encoding::FitnessSort(Genetic_Encoding first_genome, Genetic_Encoding second_genome)
+{
+	return first_genome.fitness > second_genome.fitness;
+}
 
 #endif

@@ -9,23 +9,35 @@
 #include <algorithm>
 #include "discrete_probabilities.hpp"
 
-
-
-
 namespace ANN_USM{
 
-	class Niche{
+	class Niche
+	{
 		public:
-			bool 		    exist;
-			int 		    years;
-			double		 	total_fitness;
-			double 			total_shared_fitness;
-			int 			niche_champion_position;
-			int 			amount_of_offspring;
-			vector <int> 	organism_position;
+			bool 		    			exist;
+			int 		    			years;
+			double		 				total_fitness;
+			double 						total_shared_fitness;
+			int 						niche_champion_position;
+			double 						amount_of_offspring;
+			vector <int> 				organism_position;
+			// New version
+			vector <Genetic_Encoding> 	s_organism;
+			Genetic_Encoding 			representant;
+			Genetic_Encoding 			bestGenome;
+			double						bestFitness;
+ 			bool 						championNiche;
+ 			unsigned int 				generationsWithoutChange; // Without change of best fitness. Handling stagnation
+ 			double 						avgFitness;
+
+ 			double GetBestGenomeFitness();
+			void UpdateChampion();
+			bool GenomesFitnessSort(Niche first_niche, Niche second_niche);
+			void SortGenomesByFitness();
 	};
 
-	class Population{
+	class Population
+	{
 		public:
 			Population(string path1,string path2, string _name, string _save_path);
 			Population(char user_definitions[],char genetic_encoder[], char _name[], char _save_path[]);
@@ -67,6 +79,11 @@ namespace ANN_USM{
 			\param generation corresponde a el nombre de la generacion para su mas posterior
 			*/
 			void 				print_to_file_currrent_generation();
+
+			// NEW VERSION
+			void Epoch();
+			vector <Niche> Speciate(vector <Niche> &a_niches, vector <Genetic_Encoding> &a_organisms);
+			vector <Genetic_Encoding> EpochReproduce(vector <Niche> &a_niches);
 
 			
 
@@ -115,7 +132,10 @@ namespace ANN_USM{
 			vector < double >			fitness_mean_of_past_generation; // if the fitness of the current generation is not better than any of the 5 past generations then expectative_iterations will decreases.  
 			char *						name;		
 			char *						save_path;	
-			int 						current_generation;	
+			int 						current_generation;
+			// NEW VERSION
+			double						maxHistoricalFitness;
+			Genetic_Encoding 			bestHistoricalGenome;
 	};
 }
 
