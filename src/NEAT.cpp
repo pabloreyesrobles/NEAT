@@ -158,6 +158,7 @@ Population::Population(char path1[],char path2[], char _name[], char _save_path[
 	niche_temp.exist=true;
 	niche_temp.niche_champion_position=0;
 	//current_niches.push_back(niche_temp);
+	bestHistoricalFitness = 0.0;
 	vector <Niche> t_niches;
 	current_niches = Speciate(t_niches, organisms);
 	//spatiation();
@@ -225,6 +226,7 @@ Population::Population(char path1[],char path2[], char _name[], char _save_path[
 	niche_temp.exist=true;
 	niche_temp.niche_champion_position=0;
 	//current_niches.push_back(niche_temp);
+	bestHistoricalFitness = 0.0;
 	vector <Niche> t_niches;
 	current_niches = Speciate(t_niches, organisms);
 	//spatiation();
@@ -830,6 +832,13 @@ void Population::print_niches()
 //}
 /////////////////////////////////////
 
+
+
+bool FitnessSort(Genetic_Encoding first_genome, Genetic_Encoding second_genome)
+{
+	return first_genome.fitness > second_genome.fitness;
+}
+
 double Niche::GetBestGenomeFitness()
 {
 	return bestFitness;
@@ -843,8 +852,8 @@ void Niche::UpdateChampion()
 	{
 		if (s_organisms[i].fitness >= t_bestFitness) 
 		{
-			t_bestGenome = s.organisms[i];
-			t_bestFitness = s_organisms.fitness;
+			t_bestGenome = s_organisms[i];
+			t_bestFitness = s_organisms[i].fitness;
 		}
 	}
 	
@@ -852,25 +861,32 @@ void Niche::UpdateChampion()
 	bestFitness = t_bestFitness;
 }
 
-bool Niche::GenomesFitnessSort(Niche first_niche, Niche second_niche)
+bool GenomesFitnessSort(Niche first_niche, Niche second_niche)
 {
 	return first_niche.GetBestGenomeFitness() > second_niche.GetBestGenomeFitness();
 }
 
 void Niche::SortGenomesByFitness()
 {
-	sort(s_organisms.begin(), s_organisms.end(); FitnessSort)
+	sort(s_organisms.begin(), s_organisms.end(), FitnessSort);
 }
 
 void Population::Epoch()
 {
-	current_generation++;
-
 	prev_niches = current_niches;
 	prev_organisms = organisms;
 
 	vector <Niche> t_niches;
 	t_niches = current_niches;
+
+	// Update fitness values
+	for (unsigned int i = 0; i < t_niches.size(); i++)
+	{
+		for (unsigned j = 0; j < t_niches[i].s_organisms.size(); j++)
+		{
+			t_niches[i].s_organisms[j].fitness = organisms[t_niches[i].organism_position[j]].fitness;
+		}
+	}
 
 	// Ordenar especies por mejor fitness
 	for (unsigned int i = 0; i < t_niches.size(); i++)
@@ -885,17 +901,19 @@ void Population::Epoch()
 	// -Incrementar edad de las especies
 	// -Marcar mejor especie para que sobreviva
 	// -Resetear edad de la mejor especie para penalizar aquellas que no evolucionan cada ciertas generaciones
-	unsigned int prev_championNiche;
-	unsigned int current_championNiche;
+	int prev_championNiche = -1;
+	int current_championNiche = -1;
 
 	for (unsigned int i = 0; i < t_niches.size(); i++)
 	{
-		if (t_niches[i].ChampionNiche)
+		if (t_niches[i].championNiche)
 		{
 			prev_championNiche = i;
 		}
 		t_niches[i].championNiche = false;
 	}
+
+	destagnationState = false;
 
 	for (unsigned int i = 0; i < t_niches.size(); i++)
 	{
@@ -910,19 +928,25 @@ void Population::Epoch()
 			t_niches[i].championNiche = true;
 			current_championNiche = i;
 
-			t_bestHistoricalMarked = true;
-
-			if (abs(t_niches[i].bestFitness - bestHistoricalFitness) > /*STAGNATION_FACTOR*/ 0.1) // REVIEW THIS
+			if (t_niches[i].bestFitness - bestHistoricalFitness > /*STAGNATION_FACTOR*/ 0.1) // REVIEW THIS
 			{
 				destagnationState = true;
 			}
 
+			t_bestHistoricalMarked = true; // REVIEW THIS TO MAKE IT USEFUL
 			bestHistoricalGenome = t_niches[i].bestGenome;
 			bestHistoricalFitness = t_niches[i].bestFitness;
 		}
 	}
 
-	if (t_niches[current_championNiche] != t_niches[prev_championNiche]) t_niches[prev_championNiche].years = 0;
+	if (current_championNiche != -1)
+	{
+		if (current_championNiche != prev_championNiche && prev_championNiche != -1) t_niches[prev_championNiche].years = 0;
+	}
+	else
+	{
+		t_niches[prev_championNiche].championNiche = true;
+	}	
 
 	// Ajustar fitness de las especies (share fitness)
 	// -Boost a los genomas jóvenes y penalización a las genomas viejos
@@ -961,7 +985,7 @@ void Population::Epoch()
 			if (t_niches[i].s_organisms[j].fitness > t_bestFitness)
 			{
 				champion = t_niches[i].bestGenome;
-				champion_fitness = t_niches[i].bestFitness;
+				fitness_champion = t_niches[i].bestFitness;
 			}				
 		}
 
@@ -977,6 +1001,9 @@ void Population::Epoch()
 	}
 
 	// Reproducción
+	vector<Genetic_Encoding>().swap(organisms);
+	vector<Niche>().swap(current_niches);
+
 	organisms = EpochReproduce(t_niches);
 	current_niches = Speciate(t_niches, organisms);
 
@@ -992,22 +1019,24 @@ void Population::Epoch()
 	unsigned int t_positionCompatible;
 	bool t_nicheCompatibleFound = false;
 
-	for (unsigned int i = 0; i < current_niches.size(); )
+	for (unsigned int i = 0; i < current_niches.size(); i++)
 	{
 		current_niches[i].representant = current_niches[i].s_organisms[0];
 		t_organismsAmount += current_niches[i].s_organisms.size();
 
 		// This will be used in case the duplicates will be made of the best genome ever
+		/*
 		if (compatibility(bestHistoricalGenome, current_niches[i].representant) < DISTANCE_THRESHOLD)
 		{
 			t_nicheCompatibleFound = true;
 			t_positionCompatible = i;
 		}
+		*/
 	}
 
 	if (t_organismsAmount != organisms.size()) clog << "ERROR DE TAMAÑO EN GENERACION " << current_generation << endl;
 
-    if (t_organismsAmount < POPULATION_MAX)
+    if (t_organismsAmount < (unsigned int)POPULATION_MAX)
     {
         unsigned int t_deltaPopulation = POPULATION_MAX - t_organismsAmount;
         clog << "WARNING DE TAMAÑO EN GENERACION " << current_generation << endl;
@@ -1015,11 +1044,19 @@ void Population::Epoch()
         for (unsigned int i = 0; i < t_deltaPopulation; i++)
         {
         	if (t_nicheCompatibleFound)
+        	{
         		current_niches[t_positionCompatible].s_organisms.push_back(bestHistoricalGenome); // REVIEW THIS!!! add some parameter to allow this
+        		organisms.push_back(bestHistoricalGenome);
+        	}
         	else
+        	{
         		current_niches[0].s_organisms.push_back(current_niches[0].representant);
+        		organisms.push_back(current_niches[0].representant);
+        	}
         }
     }
+
+	current_generation++;
 }
 
 vector <Niche> Population::Speciate(vector <Niche> &a_niches, vector <Genetic_Encoding> &a_organisms)
@@ -1040,9 +1077,10 @@ vector <Niche> Population::Speciate(vector <Niche> &a_niches, vector <Genetic_En
 			t_niche.exist = true;
 			t_niche.years = 0;
 			t_niche.s_organisms.push_back(a_organisms[i]);
+			t_niche.organism_position.push_back(i);
 			t_niche.representant = t_niche.s_organisms[0];
-			t_niche.generationsWithoutChange = 0;
 			t_niche.bestFitness = 0.0;
+			t_niche.avgFitness = 0.0;
 			a_niches.push_back(t_niche);
 			continue;
 		}
@@ -1051,7 +1089,8 @@ vector <Niche> Population::Speciate(vector <Niche> &a_niches, vector <Genetic_En
 		{
 			if(compatibility(a_organisms[i], a_niches[j].representant) < DISTANCE_THRESHOLD){
 				t_nicheCompatibleFound = true;
-				a_niches.s_organisms.push_back(a_organisms[i]);
+				a_niches[j].s_organisms.push_back(a_organisms[i]);
+				a_niches[j].organism_position.push_back(i);
 				break;
 			}
 		}
@@ -1062,9 +1101,10 @@ vector <Niche> Population::Speciate(vector <Niche> &a_niches, vector <Genetic_En
 			t_niche.exist = true;
 			t_niche.years = 0;
 			t_niche.s_organisms.push_back(a_organisms[i]);
+			t_niche.organism_position.push_back(i);
 			t_niche.representant = t_niche.s_organisms[0];
-			t_niche.generationsWithoutChange = 0;
 			t_niche.bestFitness = 0.0;
+			t_niche.avgFitness = 0.0;
 			a_niches.push_back(t_niche);
 			continue;
 		}		
@@ -1079,14 +1119,6 @@ vector <Genetic_Encoding> Population::EpochReproduce(vector <Niche> &a_niches)
 
 	for (unsigned int i = 0; i < a_niches.size(); i++)
 	{
-		unsigned int t_randomMotherId;
-		unsigned int t_randomFatherId;
-
-		Genetic_Encoding t_randomMother;
-		Genetic_Encoding t_randomFather;
-
-		Genetic_Encoding t_son;
-
 		unsigned int t_offspring = abs(round(a_niches[i].amount_of_offspring)); // abs just to be fure is positive. It should be positive without it
 
 		if (t_offspring == 0) continue;
@@ -1097,6 +1129,14 @@ vector <Genetic_Encoding> Population::EpochReproduce(vector <Niche> &a_niches)
 
 		for (unsigned int j = 0; j < t_offspring; j++)
 		{
+			unsigned int t_randomMotherId;
+			unsigned int t_randomFatherId;
+
+			Genetic_Encoding t_randomMother;
+			Genetic_Encoding t_randomFather;
+
+			Genetic_Encoding t_son;
+
 			t_organismsProbabilities = Discrete_Probabilities();
 			for(unsigned int p = 0; p < t_organismsAmount; p++)
 			{
@@ -1119,7 +1159,7 @@ vector <Genetic_Encoding> Population::EpochReproduce(vector <Niche> &a_niches)
 
 					while (true)
 					{
-						t_randomFatherNiche = rand() % t_niches.size();
+						t_randomFatherNiche = rand() % a_niches.size();
 						if(t_randomFatherNiche != i) break;
 					}
 

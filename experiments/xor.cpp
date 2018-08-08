@@ -69,7 +69,7 @@ int main(int argc, char** argv){
 		{
 			poblacion.organisms.at(i).fitness = fitness(poblacion.organisms.at(i));
 		}
-		poblacion.epoch();
+		poblacion.Epoch();
 		poblacion.print_to_file_currrent_generation();
 	}
 	cout << "Fitness champion: " << poblacion.fitness_champion << "\n\n"<< endl;

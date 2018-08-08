@@ -1,5 +1,5 @@
 VPATH = ./src ./headers ./objects ./experiments ./VREP/include ./VREP/remoteApi ./VREP/robotSimulator/headers ./VREP/robotSimulator/src ./VREP/robotSimulator/objects
-CC = g++ -O3
+CC = g++ -O3 -std=c++11
 CFLAGS = -Wall -fPIC -I./headers -I./objects -I./src -I./VREP/include -I./VREP/remoteApi -I./VREP/robotSimulator/src -I./VREP/robotSimulator/headers -DNON_MATLAB_PARSING -DMAX_EXT_API_CONNECTIONS=255
 
 

@@ -22,17 +22,16 @@ namespace ANN_USM{
 			double 						amount_of_offspring;
 			vector <int> 				organism_position;
 			// New version
-			vector <Genetic_Encoding> 	s_organism;
+			vector <Genetic_Encoding> 	s_organisms;
 			Genetic_Encoding 			representant;
 			Genetic_Encoding 			bestGenome;
 			double						bestFitness;
  			bool 						championNiche;
- 			unsigned int 				generationsWithoutChange; // Without change of best fitness. Handling stagnation
  			double 						avgFitness;
 
  			double GetBestGenomeFitness();
 			void UpdateChampion();
-			bool GenomesFitnessSort(Niche first_niche, Niche second_niche);
+			//bool GenomesFitnessSort(Niche first_niche, Niche second_niche);
 			void SortGenomesByFitness();
 	};
 
@@ -134,8 +133,10 @@ namespace ANN_USM{
 			char *						save_path;	
 			int 						current_generation;
 			// NEW VERSION
-			double						maxHistoricalFitness;
+			double						bestHistoricalFitness;
 			Genetic_Encoding 			bestHistoricalGenome;
+			bool 						destagnationState;
+			unsigned int 				generationsWithoutChange;
 	};
 }
 
