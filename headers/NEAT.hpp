@@ -83,6 +83,7 @@ namespace ANN_USM{
 			void Epoch();
 			vector <Niche> Speciate(vector <Niche> &a_niches, vector <Genetic_Encoding> &a_organisms);
 			vector <Genetic_Encoding> EpochReproduce(vector <Niche> &a_niches);
+			unsigned int ObtainRandomOrganism(Niche a_niche);
 
 			
 
@@ -137,6 +138,10 @@ namespace ANN_USM{
 			Genetic_Encoding 			bestHistoricalGenome;
 			bool 						destagnationState;
 			unsigned int 				generationsWithoutChange;
+
+			double						survivalThreshold;
+
+			bool						survivalSelection;
 	};
 }
 

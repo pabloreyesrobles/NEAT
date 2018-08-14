@@ -871,6 +871,32 @@ void Niche::SortGenomesByFitness()
 	sort(s_organisms.begin(), s_organisms.end(), FitnessSort);
 }
 
+unsigned int Population::ObtainRandomOrganism(Niche a_niche)
+{
+	unsigned int t_organismSelected;
+
+	if (survivalSelection)
+	{
+		unsigned int t_topSize = survivalThreshold * a_niche.s_organisms.size();
+		if (t_topSize == 0) t_topSize = 1;
+		t_organismSelected = (unsigned int)(rand() % t_topSize);
+	}
+	else
+	{
+		Discrete_Probabilities t_organismsProbabilities;
+		unsigned int t_organismsAmount = a_niche.s_organisms.size();
+
+		for(unsigned int p = 0; p < t_organismsAmount; p++)
+		{
+			t_organismsProbabilities.add_element(a_niche.s_organisms[p].shared_fitness);
+		}
+
+		t_organismSelected = (unsigned int)t_organismsProbabilities.obtain_uniformrandom_element();
+	}
+
+	return t_organismSelected;
+}
+
 void Population::Epoch()
 {
 	prev_niches = current_niches;
@@ -1005,6 +1031,7 @@ void Population::Epoch()
 	vector<Niche>().swap(current_niches);
 
 	organisms = EpochReproduce(t_niches);
+	clog << "DIME KIKI" << endl;
 	current_niches = Speciate(t_niches, organisms);
 
 	for (unsigned int i = 0; i < current_niches.size(); )
@@ -1014,6 +1041,7 @@ void Population::Epoch()
 		else
 			i++;
 	}
+
 
 	unsigned int t_organismsAmount = 0;
 	unsigned int t_positionCompatible;
@@ -1125,7 +1153,7 @@ vector <Genetic_Encoding> Population::EpochReproduce(vector <Niche> &a_niches)
 
 		unsigned int t_organismsAmount = a_niches[i].s_organisms.size();
 
-		Discrete_Probabilities t_organismsProbabilities;
+		//Discrete_Probabilities t_organismsProbabilities;
 
 		for (unsigned int j = 0; j < t_offspring; j++)
 		{
@@ -1137,13 +1165,7 @@ vector <Genetic_Encoding> Population::EpochReproduce(vector <Niche> &a_niches)
 
 			Genetic_Encoding t_son;
 
-			t_organismsProbabilities = Discrete_Probabilities();
-			for(unsigned int p = 0; p < t_organismsAmount; p++)
-			{
-				t_organismsProbabilities.add_element(a_niches[i].s_organisms[p].shared_fitness);
-			}
-
-			t_randomMotherId = t_organismsProbabilities.obtain_uniformrandom_element();
+			t_randomMotherId = ObtainRandomOrganism(a_niches[i]);
 			t_randomMother = a_niches[i].s_organisms[t_randomMotherId];
 
 			if (100.0 * (double)rand() / RAND_MAX < PERCENTAGE_OFFSPRING_WITHOUT_CROSSOVER) // should have another parameter name and value
@@ -1176,18 +1198,10 @@ vector <Genetic_Encoding> Population::EpochReproduce(vector <Niche> &a_niches)
 					else
 					{
 						// Could use another method to make sure the best genomes of the species survive. REVIEW THIS
-						t_organismsProbabilities = Discrete_Probabilities();
-						for(unsigned int p = 0; p < t_organismsAmount; p++ )
-						{
-							if (p == t_randomMotherId /*&& !ALLOW_CLONES*/)
-								t_organismsProbabilities.add_element(0.0);
-							else
-								t_organismsProbabilities.add_element(a_niches[i].s_organisms[p].shared_fitness);
-						}
-
 						while (true)
 						{
-							t_randomFatherId = t_organismsProbabilities.obtain_uniformrandom_element();
+							//t_randomFatherId = (unsigned int)t_organismsProbabilities.obtain_uniformrandom_element();
+							t_randomFatherId = ObtainRandomOrganism(a_niches[i]);
 							if(t_randomFatherId != t_randomMotherId) break;
 						}
 
