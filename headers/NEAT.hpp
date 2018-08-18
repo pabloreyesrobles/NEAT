@@ -140,8 +140,10 @@ namespace ANN_USM{
 			unsigned int 				generationsWithoutChange;
 
 			double						survivalThreshold;
+			double 						eliteOffspringParam;
 
 			bool						survivalSelection;
+			bool						allowClones;
 	};
 }
 
