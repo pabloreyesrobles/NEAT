@@ -1015,7 +1015,7 @@ void Population::Epoch()
 			}				
 		}
 
-		clog << "Media: " << t_niches[i].avgFitness << "\t MaxFitness: " << t_niches[i].bestFitness << "\t Pertenecientes: " << t_niches[i].s_organisms.size() << endl;
+		clog << "Media: " << t_niches[i].avgFitness << "\t MaxFitness: " << t_niches[i].bestFitness << "\t Pertenecientes: " << t_niches[i].s_organisms.size() << "\t Descendencia: " << t_niches[i].amount_of_offspring << endl;
 	}
 
 	// Lidiar con estancamiento global
@@ -1066,7 +1066,13 @@ void Population::Epoch()
     {
         unsigned int t_deltaPopulation = POPULATION_MAX - t_organismsAmount;
         clog << "WARNING DE TAMAÑO EN GENERACION " << current_generation << endl;
-
+        while (organisms.size() < POPULATION_MAX)
+        {
+        	organisms.push_back(current_niches[0].representant);
+    		current_niches[0].s_organisms.push_back(current_niches[0].representant);
+    		current_niches[0].organism_position.push_back(organisms.size() - 1);
+        }
+        /*
         for (unsigned int i = 0; i < t_deltaPopulation; i++)
         {
         	if (t_nicheCompatibleFound)
@@ -1082,6 +1088,7 @@ void Population::Epoch()
         		current_niches[0].organism_position.push_back(organisms.size() - 1);
         	}
         }
+        */
     }
 
 	current_generation++;
@@ -1148,7 +1155,7 @@ vector <Genetic_Encoding> Population::EpochReproduce(vector <Niche> &a_niches)
 
 	for (unsigned int i = 0; i < a_niches.size(); i++)
 	{
-		unsigned int t_offspring = abs(round(a_niches[i].amount_of_offspring)); // abs just to be fure is positive. It should be positive without it
+		unsigned int t_offspring = abs(floor(a_niches[i].amount_of_offspring)); // abs just to be fure is positive. It should be positive without it
 
 		if (t_offspring == 0) continue;
 
