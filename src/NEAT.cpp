@@ -919,21 +919,22 @@ void Population::Epoch()
 	p_avgSharedFitness = p_sharedFitness / (double)POPULATION_MAX;
 	
 	// Setear herencia por individuo y especie
-	double t_bestFitness = 0.0;
+	double t_bestFitness = (current_generation == 0) ? 0.0 : fitness_champion;
 	for (unsigned int i = 0; i < t_niches.size(); i++)
 	{
 		unsigned int t_nicheSize = t_niches[i].s_organisms.size();
 		for (unsigned int j = 0; j < t_nicheSize; j++)
 		{
 			t_niches[i].s_organisms[j].offspring = t_niches[i].s_organisms[j].shared_fitness / p_avgSharedFitness;
-			t_niches[i].amount_of_offspring += t_niches[i].s_organisms[j].offspring;
-
-			if (t_niches[i].s_organisms[j].fitness > t_bestFitness)
-			{
-				champion = t_niches[i].bestGenome;
-				fitness_champion = t_niches[i].bestFitness;
-			}				
+			t_niches[i].amount_of_offspring += t_niches[i].s_organisms[j].offspring;			
 		}
+
+		if (t_niches[i].bestFitness > t_bestFitness)
+		{
+			champion = t_niches[i].bestGenome;
+			fitness_champion = t_niches[i].bestFitness;
+			t_bestFitness = t_niches[i].bestFitness;
+		}	
 
 		clog << "Media: " << t_niches[i].avgFitness << "\t MaxFitness: " << t_niches[i].bestFitness << "\t Pertenecientes: " << t_niches[i].s_organisms.size() << "\t Descendencia: " << t_niches[i].amount_of_offspring << endl;
 	}
